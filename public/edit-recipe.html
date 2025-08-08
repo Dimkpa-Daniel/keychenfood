@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Recipe - Virtual Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1><a href="/index.html" class="header-link">Virtual Kitchen</a></h1>
+    </header>
+
+    <main>
+        <h2>Edit Recipe</h2>
+        <form id="edit-recipe-form" class="form-container">
+            <input type="hidden" id="rid" name="rid"> <!-- Hidden field to store the recipe ID -->
+            <div class="form-group">
+                <label for="name">Recipe Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <select id="type" name="type" required>
+                    <option value="" disabled selected>Select a type</option>
+                    <option value="French">French</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Chinese">Chinese</option>
+                    <option value="Indian">Indian</option>
+                    <option value="Mexican">Mexican</option>
+                    <option value="others">Others</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="cookingtime">Cooking Time (minutes):</label>
+                <input type="number" id="cookingtime" name="cookingtime" required>
+            </div>
+            <div class="form-group">
+                <label for="ingredients">Ingredients (one per line):</label>
+                <textarea id="ingredients" name="ingredients" rows="6" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="instructions">Instructions (one step per line):</label>
+                <textarea id="instructions" name="instructions" rows="8" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Image URL:</label>
+                <input type="url" id="image" name="image">
+            </div>
+            <button type="submit">Update Recipe</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Virtual Kitchen</p>
+    </footer>
+    <script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Recipe</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Full Screen Loader -->
+    <div id="loader-overlay" class="loader-overlay" style="display: none;">
+        <div class="loader-spinner"></div>
+    </div>
+    
+    <header>
+        <nav>
+            <a href="/index.html" class="logo">Virtual Kitchen</a>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="#" id="logout-button-form">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-page">
+        <div class="form-container">
+            <h2 id="form-title">Add New Recipe</h2>
+            <form id="recipe-form" novalidate>
+                <!-- A hidden input to store the recipe ID when editing -->
+                <input type="hidden" id="rid" name="rid">
+                
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                 <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" required></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="type">Type</label>
+                    <select id="type" name="type" required>
+                        <option value="">--Please choose an option--</option>
+                        <option value="French">French</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Mexican">Mexican</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cookingtime">Cooking Time (in minutes)</label>
+                    <input type="number" id="cookingtime" name="cookingtime" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="ingredients">Ingredients</label>
+                    <textarea id="ingredients" name="ingredients" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="instructions">Instructions</label>
+                    <textarea id="instructions" name="instructions" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image">Image URL</label>
+                    <input type="url" id="image" name="image" placeholder="https://example.com/image.jpg">
+                </div>
+                
+                <button type="submit">Submit Recipe</button>
+                <p id="form-message" class="message"></p>
+            </form>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 Virtual Kitchen. All Rights Reserved.</p>
+    </footer>
+    <script src="js/script.js"></script>
+</body>
+</html>
