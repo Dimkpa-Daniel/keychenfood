@@ -1,2 +1,13 @@
+# Dependencies
 node_modules/
-env
+
+# Environment variables - DO NOT PUSH TO GITHUB
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Optional - MacOS folder
+.DS_Store
