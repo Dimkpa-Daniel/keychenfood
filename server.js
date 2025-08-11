@@ -16,7 +16,7 @@ app.use(cors());
 // Parse incoming JSON requests
 app.use(express.json());
 // Serve static files (HTML, CSS, JS) from the 'public' directory
-app.use(express.static('public'));
+app.use(express.static('docs'));
 
 // --- Database Connection ---
 // Create a connection pool to the database
