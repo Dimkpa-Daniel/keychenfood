@@ -398,6 +398,7 @@ main {
   background-color: var(--primary-color);
   color: var(--white);
   font-size: 1.1rem;
+  font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -437,9 +438,32 @@ footer {
 }
 
 
-pre{
+/* pre{
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     font-size: 16px;
-    /* font-weight: 500; */
     color: var(--text-color);
+    width: 300px !important;
+} */
+
+/* --- Responsive Pre-formatted Text --- */
+pre {
+    white-space: pre-wrap;       /* Allows text to wrap */
+    word-wrap: break-word;       /* Breaks long words if necessary */
+    background-color: #f9f9f9;   /* A light background to distinguish the block */
+    border: 1px solid #eee;      /* A subtle border */
+    padding: 15px;               /* Some internal spacing */
+    border-radius: 5px;          /* Rounded corners */
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; /* A monospaced font for code-like text */
+}
+
+.welcome-message{
+    font-weight: bold;
+    color: white;
+}
+
+.form-container button:disabled {
+    background-color: #cccccc; /* A neutral, muted gray */
+    color: #666666;           /* Darker gray text for readability */
+    cursor: not-allowed; 
+    font-weight: bold;      /* Shows a 'do not enter' symbol on hover */
 }

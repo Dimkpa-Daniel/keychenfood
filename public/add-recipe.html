@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Full Screen Loader -->
+
     <div id="loader-overlay" class="loader-overlay" style="display: none;">
         <div class="loader-spinner"></div>
     </div>
@@ -25,7 +25,7 @@
         <div class="form-container">
             <h2 id="form-title">Add New Recipe</h2>
             <form id="recipe-form" novalidate>
-                <!-- A hidden input to store the recipe ID when editing -->
+              
                 <input type="hidden" id="rid" name="rid">
                 
                 <div class="form-group">
@@ -65,7 +65,7 @@
                     <input type="url" id="image" name="image" placeholder="https://example.com/image.jpg">
                 </div>
                 
-                <button type="submit">Submit Recipe</button>
+                <button type="submit" id="submit-button" disabled>Submit Recipe</button>
                 <p id="form-message" class="message"></p>
             </form>
         </div>

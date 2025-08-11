@@ -1,458 +1,215 @@
-// // This script runs when the HTML document has been completely loaded and parsed.
-// document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+  // --- Global Configuration & State ---
+  const apiUrl = "http://localhost:3000"; // Change this if you deploy to Replit
+  const token = localStorage.getItem("token");
 
-//     // --- State and Configuration ---
-//     const apiUrl = 'http://localhost:3000'; // Or your Replit URL when deployed
-//     const token = localStorage.getItem('token'); // Get the user's token from browser storage
+  // --- Helper Functions ---
+  const loader = document.getElementById("loader-overlay");
+  const showLoader = () => (loader.style.display = "flex");
+  const hideLoader = () => (loader.style.display = "none");
 
-//     // --- Helper Functions ---
+  /**
+   * Decodes the JWT token to get user information (like uid).
+   * @returns {object|null} The decoded payload or null if no token exists.
+   */
+  const getDecodedToken = () => {
+    if (!token) return null;
+    try {
+      // The payload is the part between the two dots.
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload;
+    } catch (e) {
+      console.error("Error decoding token:", e);
+      return null;
+    }
+  };
+  const currentUser = getDecodedToken();
 
-//     /**
-//      * Updates the navigation links based on whether a user is logged in.
-//      */
-//     const updateNavLinks = () => {
-//         const loginLink = document.getElementById('login-link');
-//         const registerLink = document.getElementById('register-link');
-//         const addRecipeLink = document.getElementById('add-recipe-link');
-//         const logoutButton = document.getElementById('logout-button');
-//         const logoutButtonForm = document.getElementById('logout-button-form'); // Logout button on form pages
+  /**
+   * Updates navigation links based on login status.
+   */
+  const updateNavLinks = () => {
+     const welcomeMsg = document.getElementById('welcome-message');
+    const loginLink = document.getElementById("login-link");
+    const registerLink = document.getElementById("register-link");
+    const addRecipeLink = document.getElementById("add-recipe-link");
+    const logoutButtons = document.querySelectorAll(
+      "#logout-button, #logout-button-form"
+    );
 
-//         if (token) {
-//             // User is logged in: Hide Login/Register, Show Add Recipe/Logout
-//             if (loginLink) loginLink.style.display = 'none';
-//             if (registerLink) registerLink.style.display = 'none';
-//             if (addRecipeLink) addRecipeLink.style.display = 'block'; // Use 'block' or 'inline' as appropriate
-//             if (logoutButton) logoutButton.style.display = 'block';
-//             if (logoutButtonForm) logoutButtonForm.style.display = 'block';
-//         } else {
-//             // User is not logged in: Show Login/Register, Hide Add Recipe/Logout
-//             if (loginLink) loginLink.style.display = 'block';
-//             if (registerLink) registerLink.style.display = 'block';
-//             if (addRecipeLink) addRecipeLink.style.display = 'none';
-//             if (logoutButton) logoutButton.style.display = 'none';
-//             if (logoutButtonForm) logoutButtonForm.style.display = 'none';
-//         }
-//     };
+    if (token) {
+if (welcomeMsg) welcomeMsg.textContent = `Welcome, ${currentUser.username}!`;
+      if (loginLink) loginLink.style.display = "none";
+      if (registerLink) registerLink.style.display = "none";
+      if (addRecipeLink) addRecipeLink.style.display = "block";
+      logoutButtons.forEach((btn) => (btn.style.display = "block"));
+    } else {
+      if (loginLink) loginLink.style.display = "block";
+      if (registerLink) registerLink.style.display = "block";
+      if (addRecipeLink) addRecipeLink.style.display = "none";
+      logoutButtons.forEach((btn) => (btn.style.display = "none"));
+    }
+  };
 
-//     /**
-//      * Logs the user out by clearing the token and reloading the page.
-//      */
-//     const handleLogout = () => {
-//         localStorage.removeItem('token');
-//         alert('You have been logged out.');
-//         window.location.href = 'index.html'; // Redirect to homepage
-//     };
+  /**
+   * Handles user logout.
+   */
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem("token");
+      window.location.href = "index.html";
+    }
+  };
 
+  /**
+   * Toggles password visibility in a form.
+   */
+  const setupPasswordToggle = () => {
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+    if (togglePassword && passwordInput) {
+      togglePassword.addEventListener("click", () => {
+        const type =
+          passwordInput.getAttribute("type") === "password"
+            ? "text"
+            : "password";
+        passwordInput.setAttribute("type", type);
+        togglePassword.classList.toggle("fa-eye-slash");
+      });
+    }
+  };
 
-//     // --- Page-Specific Logic ---
-
-//     // 1. Logic for the Homepage (index.html)
-//     const recipeListContainer = document.getElementById('recipe-list');
-//     if (recipeListContainer) {
-//         const fetchAndDisplayRecipes = async (searchTerm = '') => {
-//             try {
-//                 let url = `${apiUrl}/api/recipes`;
-//                 if (searchTerm) {
-//                     // Append search term as a query parameter
-//                     url += `?search=${encodeURIComponent(searchTerm)}`;
-//                 }
-//                 const response = await fetch(url);
-//                 if (!response.ok) {
-//                     throw new Error('Network response was not ok');
-//                 }
-//                 const recipes = await response.json();
-                
-//                 recipeListContainer.innerHTML = ''; // Clear previous results
-//                 if (recipes.length === 0) {
-//                     recipeListContainer.innerHTML = '<p>No recipes found. Try a different search!</p>';
-//                     return;
-//                 }
-
-//                 recipes.forEach(recipe => {
-//                     const recipeCard = document.createElement('a');
-//                     recipeCard.href = `recipe.html?rid=${recipe.rid}`; // Link to the detail page
-//                     recipeCard.className = 'recipe-card';
-//                     recipeCard.innerHTML = `
-//                         <img src="${recipe.image || 'https://via.placeholder.com/300x200.png?text=No+Image'}" alt="${recipe.name}">
-//                         <div class="recipe-card-content">
-//                             <h3>${recipe.name}</h3>
-//                             <p><strong>Type:</strong> ${recipe.type}</p>
-//                             <p>${recipe.description.substring(0, 100)}...</p>
-//                         </div>
-//                     `;
-//                     recipeListContainer.appendChild(recipeCard);
-//                 });
-//             } catch (error) {
-//                 console.error('Error fetching recipes:', error);
-//                 recipeListContainer.innerHTML = '<p>Could not load recipes. Please try again later.</p>';
-//             }
-//         };
-
-//         // Initial fetch when the page loads
-//         fetchAndDisplayRecipes();
-
-//         // Add event listener for the search button
-//         const searchButton = document.getElementById('searchButton');
-//         const searchInput = document.getElementById('searchInput');
-//         searchButton.addEventListener('click', () => {
-//             fetchAndDisplayRecipes(searchInput.value);
-//         });
-//         searchInput.addEventListener('keyup', (event) => {
-//             if (event.key === 'Enter') {
-//                 fetchAndDisplayRecipes(searchInput.value);
-//             }
-//         });
-//     }
-
-//     // 2. Logic for the Single Recipe Page (recipe.html)
-//     const recipeDetailsContainer = document.getElementById('recipe-details');
-//     if (recipeDetailsContainer) {
-//         const urlParams = new URLSearchParams(window.location.search);
-//         const recipeId = urlParams.get('rid');
-
-//         if (recipeId) {
-//             const fetchAndDisplaySingleRecipe = async () => {
-//                 try {
-//                     const response = await fetch(`${apiUrl}/api/recipes/${recipeId}`);
-//                     if (!response.ok) {
-//                          if(response.status === 404) {
-//                             recipeDetailsContainer.innerHTML = '<p>Recipe not found.</p>';
-//                         } else {
-//                             throw new Error('Failed to fetch recipe details');
-//                         }
-//                         return;
-//                     }
-//                     const recipe = await response.json();
-                    
-//                     recipeDetailsContainer.innerHTML = `
-//                         <h1>${recipe.name}</h1>
-//                         <img src="${recipe.image || 'https://via.placeholder.com/600x400.png?text=No+Image'}" alt="${recipe.name}" style="width:100%; max-width:600px; border-radius:8px;">
-//                         <p><strong>By:</strong> ${recipe.owner}</p>
-//                         <p><strong>Type:</strong> ${recipe.type}</p>
-//                         <p><strong>Cooking Time:</strong> ${recipe.cookingtime} minutes</p>
-//                         <h3>Description</h3>
-//                         <p>${recipe.description}</p>
-//                         <h3>Ingredients</h3>
-//                         <p style="white-space: pre-wrap;">${recipe.ingredients}</p>
-//                         <h3>Instructions</h3>
-//                         <p style="white-space: pre-wrap;">${recipe.instructions}</p>
-//                     `;
-//                 } catch (error) {
-//                     console.error('Error fetching recipe:', error);
-//                     recipeDetailsContainer.innerHTML = '<p>Could not load recipe details. Please try again later.</p>';
-//                 }
-//             };
-//             fetchAndDisplaySingleRecipe();
-//         } else {
-//             recipeDetailsContainer.innerHTML = '<p>No recipe ID provided. Please go back to the homepage and select a recipe.</p>';
-//         }
-//     }
-    
-//     // 3. Logic for the Registration Page (register.html)
-//     const registerForm = document.getElementById('register-form');
-//     if (registerForm) {
-//         registerForm.addEventListener('submit', async (e) => {
-//             e.preventDefault(); // Prevent the form from submitting the traditional way
-//             const messageEl = document.getElementById('register-message');
-//             messageEl.textContent = ''; // Clear previous messages
-
-//             const formData = new FormData(registerForm);
-//             const data = Object.fromEntries(formData.entries());
-
-//             try {
-//                 const response = await fetch(`${apiUrl}/api/register`, {
-//                     method: 'POST',
-//                     headers: { 'Content-Type': 'application/json' },
-//                     body: JSON.stringify(data),
-//                 });
-                
-//                 const result = await response.json();
-
-//                 if (!response.ok) {
-//                     // The server responded with an error (e.g., username taken)
-//                     throw new Error(result.message || 'Registration failed');
-//                 }
-
-//                 messageEl.style.color = 'green';
-//                 messageEl.textContent = 'Registration successful! Redirecting to login...';
-//                 setTimeout(() => {
-//                     window.location.href = 'login.html';
-//                 }, 2000);
-
-//             } catch (error) {
-//                 console.error('Registration error:', error);
-//                 messageEl.style.color = 'var(--primary-color)';
-//                 messageEl.textContent = error.message;
-//             }
-//         });
-//     }
-
-//     // 4. Logic for the Login Page (login.html)
-//     const loginForm = document.getElementById('login-form');
-//     if (loginForm) {
-//         loginForm.addEventListener('submit', async (e) => {
-//             e.preventDefault();
-//             const messageEl = document.getElementById('login-message');
-//             messageEl.textContent = '';
-
-//             const formData = new FormData(loginForm);
-//             const data = Object.fromEntries(formData.entries());
-
-//             try {
-//                 const response = await fetch(`${apiUrl}/api/login`, {
-//                     method: 'POST',
-//                     headers: { 'Content-Type': 'application/json' },
-//                     body: JSON.stringify(data),
-//                 });
-                
-//                 const result = await response.json();
-
-//                 if (!response.ok) {
-//                     throw new Error(result.message || 'Login failed');
-//                 }
-                
-//                 // On successful login, save the token
-//                 localStorage.setItem('token', result.token);
-
-//                 messageEl.style.color = 'green';
-//                 messageEl.textContent = 'Login successful! Redirecting...';
-//                 setTimeout(() => {
-//                     window.location.href = 'index.html';
-//                 }, 1500);
-
-//             } catch (error) {
-//                 console.error('Login error:', error);
-//                 messageEl.style.color = 'var(--primary-color)';
-//                 messageEl.textContent = error.message;
-//             }
-//         });
-//     }
-
-//     // 5. Logic for the Add/Edit Recipe Page (add-recipe.html)
-//     const recipeForm = document.getElementById('recipe-form');
-//     if (recipeForm) {
-//         // This page requires a user to be logged in
-//         if (!token) {
-//             alert('You must be logged in to add a recipe.');
-//             window.location.href = 'login.html';
-//             return; // Stop further execution
-//         }
+   /**
+     * Enables a form's submit button only when all required fields are filled.
+     * @param {HTMLFormElement} form The form element.
+     * @param {HTMLButtonElement} button The submit button element.
+     */
+    const setupFormValidation = (form, button) => {
+        if (!form || !button) return;
+        const requiredInputs = form.querySelectorAll('[required]');
         
-//         recipeForm.addEventListener('submit', async (e) => {
-//             e.preventDefault();
-//             const messageEl = document.getElementById('form-message');
-//             messageEl.textContent = '';
+        const validate = () => {
+            const allValid = Array.from(requiredInputs).every(input => input.value.trim() !== '');
+            button.disabled = !allValid;
+        };
 
-//             const formData = new FormData(recipeForm);
-//             const data = Object.fromEntries(formData.entries());
-            
-//             try {
-//                 const response = await fetch(`${apiUrl}/api/recipes`, {
-//                     method: 'POST',
-//                     headers: {
-//                         'Content-Type': 'application/json',
-//                         'Authorization': `Bearer ${token}` // Send the token for authentication
-//                     },
-//                     body: JSON.stringify(data)
-//                 });
-                
-//                 const result = await response.json();
-
-//                 if (!response.ok) {
-//                     throw new Error(result.message || 'Failed to submit recipe.');
-//                 }
-
-//                 messageEl.style.color = 'green';
-//                 messageEl.textContent = 'Recipe added successfully! Redirecting...';
-//                 setTimeout(() => {
-//                     window.location.href = 'index.html';
-//                 }, 2000);
-
-//             } catch (error) {
-//                 console.error('Recipe submission error:', error);
-//                 messageEl.style.color = 'var(--primary-color)';
-//                 messageEl.textContent = error.message;
-//             }
-//         });
-//     }
-
-//     // --- Global Event Listeners ---
-    
-//     // Attach logout functionality to all logout buttons
-//     const logoutButtons = document.querySelectorAll('#logout-button, #logout-button-form');
-//     logoutButtons.forEach(button => button.addEventListener('click', handleLogout));
-    
-//     // Run initial setup functions
-//     updateNavLinks();
-// });
-
-
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // --- Global Configuration & State ---
-    const apiUrl = 'http://localhost:3000'; // Change this if you deploy to Replit
-    const token = localStorage.getItem('token');
-    
-    // --- Helper Functions ---
-    const loader = document.getElementById('loader-overlay');
-    const showLoader = () => loader.style.display = 'flex';
-    const hideLoader = () => loader.style.display = 'none';
-
-    /**
-     * Decodes the JWT token to get user information (like uid).
-     * @returns {object|null} The decoded payload or null if no token exists.
-     */
-    const getDecodedToken = () => {
-        if (!token) return null;
-        try {
-            // The payload is the part between the two dots.
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload;
-        } catch (e) {
-            console.error('Error decoding token:', e);
-            return null;
-        }
+        form.addEventListener('input', validate);
+        validate(); // Initial check
     };
-    const currentUser = getDecodedToken();
 
-    /**
-     * Updates navigation links based on login status.
-     */
-    const updateNavLinks = () => {
-        const loginLink = document.getElementById('login-link');
-        const registerLink = document.getElementById('register-link');
-        const addRecipeLink = document.getElementById('add-recipe-link');
-        const logoutButtons = document.querySelectorAll('#logout-button, #logout-button-form');
+  // --- Page-Specific Logic ---
 
-        if (token) {
-            if (loginLink) loginLink.style.display = 'none';
-            if (registerLink) registerLink.style.display = 'none';
-            if (addRecipeLink) addRecipeLink.style.display = 'block';
-            logoutButtons.forEach(btn => btn.style.display = 'block');
-        } else {
-            if (loginLink) loginLink.style.display = 'block';
-            if (registerLink) registerLink.style.display = 'block';
-            if (addRecipeLink) addRecipeLink.style.display = 'none';
-            logoutButtons.forEach(btn => btn.style.display = 'none');
-        }
-    };
-    
-    /**
-     * Handles user logout.
-     */
-    const handleLogout = () => {
-        if (confirm('Are you sure you want to log out?')) {
-            localStorage.removeItem('token');
-            window.location.href = 'index.html';
-        }
-    };
-    
-    /**
-     * Toggles password visibility in a form.
-     */
-    const setupPasswordToggle = () => {
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', () => {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                togglePassword.classList.toggle('fa-eye-slash');
-            });
-        }
-    };
-    
-    // --- Page-Specific Logic ---
+  const page = window.location.pathname.split("/").pop();
 
-    const page = window.location.pathname.split('/').pop();
+  // 1. Homepage Logic (index.html)
+  if (page === "index.html" || page === "") {
+    const recipeListContainer = document.getElementById("recipe-list");
+    const searchInput = document.getElementById("searchInput");
+    const searchButton = document.getElementById("searchButton");
 
-    // 1. Homepage Logic (index.html)
-    if (page === 'index.html' || page === '') {
-        const recipeListContainer = document.getElementById('recipe-list');
-        const searchInput = document.getElementById('searchInput');
-        const searchButton = document.getElementById('searchButton');
-
-        const showSkeletonLoaders = () => {
-            recipeListContainer.innerHTML = ''; // Clear existing content
-            for (let i = 0; i < 6; i++) {
-                const skeletonCard = document.createElement('div');
-                skeletonCard.className = 'recipe-card';
-                skeletonCard.innerHTML = `
+    const showSkeletonLoaders = () => {
+      recipeListContainer.innerHTML = ""; // Clear existing content
+      for (let i = 0; i < 6; i++) {
+        const skeletonCard = document.createElement("div");
+        skeletonCard.className = "recipe-card";
+        skeletonCard.innerHTML = `
                     <div class="skeleton skeleton-img"></div>
                     <div class="recipe-card-content">
                         <div class="skeleton skeleton-text"></div>
                         <div class="skeleton skeleton-text skeleton-text-short"></div>
                     </div>
                 `;
-                recipeListContainer.appendChild(skeletonCard);
-            }
-        };
+        recipeListContainer.appendChild(skeletonCard);
+      }
+    };
 
-        const fetchAndDisplayRecipes = async (searchTerm = '') => {
-            showSkeletonLoaders();
-            try {
-                let url = `${apiUrl}/api/recipes`;
-                if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
-                
-                const response = await fetch(url);
-                const recipes = await response.json();
+    const fetchAndDisplayRecipes = async (searchTerm = "") => {
+      showSkeletonLoaders();
+      try {
+        let url = `${apiUrl}/api/recipes`;
+        if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
 
-                console.log('API RECEIPE RESPONSE', recipes)
-                
-                recipeListContainer.innerHTML = ''; // Clear skeletons
-                if (recipes.length === 0) {
-                    recipeListContainer.innerHTML = '<p>No recipes found.</p>';
-                    return;
-                }
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch recipes from the server.");
+        }
+        const recipes = await response.json();
 
-                recipes.forEach(recipe => {
-                    const recipeCard = document.createElement('a');
-                    recipeCard.href = `recipe.html?rid=${recipe.rid}`;
-                    recipeCard.className = 'recipe-card';
-                    recipeCard.innerHTML = `
-                        <img src="${recipe.image || 'https://lh3.googleusercontent.com/gg-dl/AJfQ9KTPIjRJln2OnKnWAb2DB2Fjlv-MLiJ7RCBSVKCoeckiEYlUfYJAPztiGvctuU2I7OYM048gP3AKwJorC_r93s5OSeQHlxMzaaVbPvmZPBgLwilGCmCV47a5mRN_QQkJCkz-SNhmIFGtBnSc9sFftwpTEH3rezb_DQBxWp5V807JTXAS2g'}" alt="${recipe.name}">
+        recipeListContainer.innerHTML = ""; // Clear skeletons
+        if (recipes.length === 0) {
+          recipeListContainer.innerHTML = "<p>No recipes found.</p>";
+          return;
+        }
+
+        recipes.forEach((recipe) => {
+          const recipeCard = document.createElement("a");
+          recipeCard.href = `recipe.html?rid=${recipe.rid}`;
+          recipeCard.className = "recipe-card";
+
+          // --- THIS IS THE CORRECTED PART ---
+          // It ensures the recipe.image URL is placed inside an <img src="..."> tag.
+          recipeCard.innerHTML = `
+                        <img src="${
+                          recipe.image ||
+                          "https://via.placeholder.com/300x200.png?text=No+Image"
+                        }" alt="${recipe.name}">
                         <div class="recipe-card-content">
                             <h3>${recipe.name}</h3>
                             <p><strong>Type:</strong> ${recipe.type}</p>
                             <p>${recipe.description.substring(0, 100)}...</p>
                         </div>
                     `;
-                    recipeListContainer.appendChild(recipeCard);
-                });
-            } catch (error) {
-                console.error('Error fetching recipes:', error);
-                recipeListContainer.innerHTML = '<p class="message error">Could not load recipes. Please try again later.</p>';
-            }
-        };
+          // --- END OF CORRECTION ---
 
-        fetchAndDisplayRecipes(); // Initial load
-        searchButton.addEventListener('click', () => fetchAndDisplayRecipes(searchInput.value));
-        searchInput.addEventListener('keyup', (e) => e.key === 'Enter' && fetchAndDisplayRecipes(searchInput.value));
-    }
+          recipeListContainer.appendChild(recipeCard);
+        });
+      } catch (error) {
+        console.error("Error fetching recipes:", error);
+        recipeListContainer.innerHTML =
+          '<p class="message error">Could not load recipes. Please try again later.</p>';
+      }
+    };
 
-    // 2. Single Recipe Page Logic (recipe.html)
-    if (page === 'recipe.html') {
-        const recipeDetailsContainer = document.getElementById('recipe-details');
-        const recipeId = new URLSearchParams(window.location.search).get('rid');
+    fetchAndDisplayRecipes(); // Initial load
+    searchButton.addEventListener("click", () =>
+      fetchAndDisplayRecipes(searchInput.value)
+    );
+    searchInput.addEventListener(
+      "keyup",
+      (e) => e.key === "Enter" && fetchAndDisplayRecipes(searchInput.value)
+    );
+  }
 
-        if (!recipeId) {
-            recipeDetailsContainer.innerHTML = '<p class="message error">Recipe not found. Please select a recipe from the homepage.</p>';
-        } else {
-            const fetchAndDisplaySingleRecipe = async () => {
-                showLoader();
-                try {
-                    const response = await fetch(`${apiUrl}/api/recipes/${recipeId}`);
-                    if (!response.ok) throw new Error('Recipe not found');
-                    
-                    const recipe = await response.json();
-                    
-                    recipeDetailsContainer.innerHTML = `
+  // 2. Single Recipe Page Logic (recipe.html)
+  if (page === "recipe.html") {
+    const recipeDetailsContainer = document.getElementById("recipe-details");
+    const recipeId = new URLSearchParams(window.location.search).get("rid");
+
+    if (!recipeId) {
+      recipeDetailsContainer.innerHTML =
+        '<p class="message error">Recipe not found. Please select a recipe from the homepage.</p>';
+    } else {
+      const fetchAndDisplaySingleRecipe = async () => {
+        showLoader();
+        try {
+          const response = await fetch(`${apiUrl}/api/recipes/${recipeId}`);
+          if (!response.ok) throw new Error("Recipe not found");
+
+          const recipe = await response.json();
+
+          recipeDetailsContainer.innerHTML = `
                         <h1>${recipe.name}</h1>
-                        <img src="${recipe.image || 'https://via.placeholder.com/600x400.png?text=No+Image'}" alt="${recipe.name}" style="width:100%; max-width:600px; border-radius:8px;">
+                        <img src="${
+                          recipe.image ||
+                          "https://via.placeholder.com/600x400.png?text=No+Image"
+                        }" alt="${
+            recipe.name
+          }" style="width:100%; max-width:600px; border-radius:8px;">
                         <p><strong>By:</strong> ${recipe.owner}</p>
                         <p><strong>Type:</strong> ${recipe.type}</p>
-                        <p><strong>Cooking Time:</strong> ${recipe.cookingtime} minutes</p>
+                        <p><strong>Cooking Time:</strong> ${
+                          recipe.cookingtime
+                        } minutes</p>
                         <h3>Description</h3>
                         <p>${recipe.description}</p>
                         <h3>Ingredients</h3>
@@ -462,199 +219,567 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div id="edit-button-container"></div>
                     `;
 
-                    // Show edit button if the logged-in user is the owner
-                    if (currentUser && currentUser.uid === recipe.uid) {
-                        const editButtonContainer = document.getElementById('edit-button-container');
-                        editButtonContainer.innerHTML = `<a href="add-recipe.html?edit=${recipe.rid}" class="edit-button">Edit This Recipe</a>`;
-                    }
-                } catch (error) {
-                    console.error('Error fetching recipe:', error);
-                    recipeDetailsContainer.innerHTML = '<p class="message error">Could not load recipe details.</p>';
-                } finally {
-                    hideLoader();
-                }
-            };
-            fetchAndDisplaySingleRecipe();
+          // Show edit button if the logged-in user is the owner
+          if (currentUser && currentUser.uid === recipe.uid) {
+            const editButtonContainer = document.getElementById(
+              "edit-button-container"
+            );
+            editButtonContainer.innerHTML = `<a href="add-recipe.html?edit=${recipe.rid}" class="edit-button">Edit This Recipe</a>`;
+          }
+        } catch (error) {
+          console.error("Error fetching recipe:", error);
+          recipeDetailsContainer.innerHTML =
+            '<p class="message error">Could not load recipe details.</p>';
+        } finally {
+          hideLoader();
         }
+      };
+      fetchAndDisplaySingleRecipe();
+    }
+  }
+
+    if (page === 'register.html' || page === 'login.html' || page === 'add-recipe.html') {
+        const form = document.querySelector('form');
+        const button = document.getElementById('submit-button');
+        setupFormValidation(form, button);
     }
 
-    // 3. Registration Page Logic (register.html)
-    if (page === 'register.html') {
-        const registerForm = document.getElementById('register-form');
-        const messageEl = document.getElementById('register-message');
-        
-        setupPasswordToggle();
+  // 3. Registration Page Logic (register.html)
+  if (page === "register.html") {
+    const registerForm = document.getElementById("register-form");
+    const messageEl = document.getElementById("register-message");
 
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            messageEl.textContent = '';
-            
-            // Client-side validation
-            const email = registerForm.email.value;
-            const password = registerForm.password.value;
-            if (!/^\S+@\S+\.\S+$/.test(email)) {
-                messageEl.className = 'message error';
-                messageEl.textContent = 'Please enter a valid email address.';
-                return;
-            }
-            if (password.length < 8) {
-                messageEl.className = 'message error';
-                messageEl.textContent = 'Password must be at least 8 characters long.';
-                return;
-            }
-            
-            showLoader();
-            const formData = new FormData(registerForm);
-            const data = Object.fromEntries(formData.entries());
+    setupPasswordToggle();
 
-            try {
-                const response = await fetch(`${apiUrl}/api/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      messageEl.textContent = "";
 
-                messageEl.className = 'message success';
-                messageEl.textContent = 'Registration successful! Redirecting to login...';
-                setTimeout(() => window.location.href = 'login.html', 2000);
-            } catch (error) {
-                messageEl.className = 'message error';
-                messageEl.textContent = error.message;
-            } finally {
-                hideLoader();
-            }
+      // Client-side validation
+      const email = registerForm.email.value;
+      const password = registerForm.password.value;
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        messageEl.className = "message error";
+        messageEl.textContent = "Please enter a valid email address.";
+        return;
+      }
+      if (password.length < 8) {
+        messageEl.className = "message error";
+        messageEl.textContent = "Password must be at least 8 characters long.";
+        return;
+      }
+
+      showLoader();
+      const formData = new FormData(registerForm);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(`${apiUrl}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
         });
-    }
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
 
-    // 4. Login Page Logic (login.html)
-    if (page === 'login.html') {
-        const loginForm = document.getElementById('login-form');
-        const messageEl = document.getElementById('login-message');
-        
-        setupPasswordToggle();
-        
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            messageEl.textContent = '';
+        messageEl.className = "message success";
+        messageEl.textContent =
+          "Registration successful! Redirecting to login...";
+        setTimeout(() => (window.location.href = "login.html"), 2000);
+      } catch (error) {
+        messageEl.className = "message error";
+        messageEl.textContent = error.message;
+      } finally {
+        hideLoader();
+      }
+    });
+  }
 
-            if (loginForm.username.value === '' || loginForm.password.value === '') {
-                 messageEl.className = 'message error';
-                 messageEl.textContent = 'Please enter both username and password.';
-                 return;
-            }
+  // 4. Login Page Logic (login.html)
+  if (page === "login.html") {
+    const loginForm = document.getElementById("login-form");
+    const messageEl = document.getElementById("login-message");
 
-            showLoader();
-            const formData = new FormData(loginForm);
-            const data = Object.fromEntries(formData.entries());
+    setupPasswordToggle();
 
-            try {
-                const response = await fetch(`${apiUrl}/api/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      messageEl.textContent = "";
 
-                localStorage.setItem('token', result.token);
-                messageEl.className = 'message success';
-                messageEl.textContent = 'Login successful! Redirecting...';
-                setTimeout(() => window.location.href = 'index.html', 1500);
-            } catch (error) {
-                messageEl.className = 'message error';
-                messageEl.textContent = error.message;
-            } finally {
-                hideLoader();
-            }
+      if (loginForm.username.value === "" || loginForm.password.value === "") {
+        messageEl.className = "message error";
+        messageEl.textContent = "Please enter both username and password.";
+        return;
+      }
+
+      showLoader();
+      const formData = new FormData(loginForm);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch(`${apiUrl}/api/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
         });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
+
+        localStorage.setItem("token", result.token);
+        messageEl.className = "message success";
+        messageEl.textContent = "Login successful! Redirecting...";
+        setTimeout(() => (window.location.href = "index.html"), 1500);
+      } catch (error) {
+        messageEl.className = "message error";
+        messageEl.textContent = error.message;
+      } finally {
+        hideLoader();
+      }
+    });
+  }
+
+  // 5. Add/Edit Recipe Page Logic (add-recipe.html)
+  if (page === "add-recipe.html") {
+    if (!token) {
+      alert("You must be logged in to access this page.");
+      window.location.href = "login.html";
+      return;
     }
 
-    // 5. Add/Edit Recipe Page Logic (add-recipe.html)
-    if (page === 'add-recipe.html') {
-        if (!token) {
-            alert('You must be logged in to access this page.');
-            window.location.href = 'login.html';
-            return;
-        }
+    const recipeForm = document.getElementById("recipe-form");
+    const formTitle = document.getElementById("form-title");
+    const messageEl = document.getElementById("form-message");
+    const recipeId = new URLSearchParams(window.location.search).get("edit");
 
-        const recipeForm = document.getElementById('recipe-form');
-        const formTitle = document.getElementById('form-title');
-        const messageEl = document.getElementById('form-message');
-        const recipeId = new URLSearchParams(window.location.search).get('edit');
+    const populateForm = async (rid) => {
+      showLoader();
+      try {
+        const response = await fetch(`${apiUrl}/api/recipes/${rid}`);
+        if (!response.ok)
+          throw new Error("Could not fetch recipe data for editing.");
+        const recipe = await response.json();
 
-        const populateForm = async (rid) => {
-            showLoader();
-            try {
-                const response = await fetch(`${apiUrl}/api/recipes/${rid}`);
-                if (!response.ok) throw new Error('Could not fetch recipe data for editing.');
-                const recipe = await response.json();
-
-                // Security check: Only allow owners to populate the form
-                if (currentUser.uid !== recipe.uid) {
-                    alert('You are not authorized to edit this recipe.');
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                // Populate the form fields
-                recipeForm.rid.value = recipe.rid;
-                recipeForm.name.value = recipe.name;
-                recipeForm.description.value = recipe.description;
-                recipeForm.type.value = recipe.type;
-                recipeForm.cookingtime.value = recipe.cookingtime;
-                recipeForm.ingredients.value = recipe.ingredients;
-                recipeForm.instructions.value = recipe.instructions;
-                recipeForm.image.value = recipe.image;
-            } catch (error) {
-                messageEl.className = 'message error';
-                messageEl.textContent = error.message;
-            } finally {
-                hideLoader();
-            }
-        };
-
-        if (recipeId) {
-            formTitle.textContent = 'Edit Your Recipe';
-            populateForm(recipeId);
+        // Security check: Only allow owners to populate the form
+        if (currentUser.uid !== recipe.uid) {
+          alert("You are not authorized to edit this recipe.");
+          window.location.href = "index.html";
+          return;
         }
 
-        recipeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoader();
-            const formData = new FormData(recipeForm);
-            const data = Object.fromEntries(formData.entries());
-            
-            const method = recipeId ? 'PUT' : 'POST';
-            let url = recipeId ? `${apiUrl}/api/recipes/${recipeId}` : `${apiUrl}/api/recipes`;
+        // Populate the form fields
+        recipeForm.rid.value = recipe.rid;
+        recipeForm.name.value = recipe.name;
+        recipeForm.description.value = recipe.description;
+        recipeForm.type.value = recipe.type;
+        recipeForm.cookingtime.value = recipe.cookingtime;
+        recipeForm.ingredients.value = recipe.ingredients;
+        recipeForm.instructions.value = recipe.instructions;
+        recipeForm.image.value = recipe.image;
+      } catch (error) {
+        messageEl.className = "message error";
+        messageEl.textContent = error.message;
+      } finally {
+        hideLoader();
+      }
+    };
 
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
-
-                messageEl.className = 'message success';
-                messageEl.textContent = `Recipe ${recipeId ? 'updated' : 'added'} successfully! Redirecting...`;
-                setTimeout(() => window.location.href = 'index.html', 2000);
-            } catch (error) {
-                messageEl.className = 'message error';
-                messageEl.textContent = error.message;
-            } finally {
-                hideLoader();
-            }
-        });
+    if (recipeId) {
+      formTitle.textContent = "Edit Your Recipe";
+      populateForm(recipeId);
     }
 
-    // --- Global Initializers ---
-    updateNavLinks();
-    const allLogoutButtons = document.querySelectorAll('#logout-button, #logout-button-form');
-    allLogoutButtons.forEach(button => button.addEventListener('click', handleLogout));
+    recipeForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      showLoader();
+      const formData = new FormData(recipeForm);
+      const data = Object.fromEntries(formData.entries());
+
+      const method = recipeId ? "PUT" : "POST";
+      let url = recipeId
+        ? `${apiUrl}/api/recipes/${recipeId}`
+        : `${apiUrl}/api/recipes`;
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
+
+        messageEl.className = "message success";
+        messageEl.textContent = `Recipe ${
+          recipeId ? "updated" : "added"
+        } successfully! Redirecting...`;
+        setTimeout(() => (window.location.href = "index.html"), 2000);
+      } catch (error) {
+        messageEl.className = "message error";
+        messageEl.textContent = error.message;
+      } finally {
+        hideLoader();
+      }
+    });
+  }
+
+  // --- Global Initializers ---
+  updateNavLinks();
+  const allLogoutButtons = document.querySelectorAll(
+    "#logout-button, #logout-button-form"
+  );
+  allLogoutButtons.forEach((button) =>
+    button.addEventListener("click", handleLogout)
+  );
 });
+
+
+
+// document.addEventListener('DOMContentLoaded', () => {
+
+//     const apiUrl = 'http://localhost:3000';
+//     const token = localStorage.getItem('token');
+//     const loader = document.getElementById('loader-overlay');
+
+//     const showLoader = () => loader && (loader.style.display = 'flex');
+//     const hideLoader = () => loader && (loader.style.display = 'none');
+
+//     const getDecodedToken = () => {
+//         if (!token) return null;
+//         try {
+//             return JSON.parse(atob(token.split('.')[1]));
+//         } catch (e) { return null; }
+//     };
+//     const currentUser = getDecodedToken();
+
+//     const updateNavLinks = () => {
+//         const welcomeMsg = document.getElementById('welcome-message');
+//         const loginLink = document.getElementById('login-link');
+//         const registerLink = document.getElementById('register-link');
+//         const addRecipeLink = document.getElementById('add-recipe-link');
+//         const logoutButtons = document.querySelectorAll('#logout-button, #logout-button-form');
+
+//         if (currentUser) {
+//             if (welcomeMsg) welcomeMsg.textContent = `Welcome, ${currentUser.username}!`;
+//             if (loginLink) loginLink.style.display = 'none';
+//             if (registerLink) registerLink.style.display = 'none';
+//             if (addRecipeLink) addRecipeLink.style.display = 'block';
+//             logoutButtons.forEach(btn => btn.style.display = 'block');
+//         } else {
+//             if (welcomeMsg) welcomeMsg.textContent = '';
+//             if (loginLink) loginLink.style.display = 'block';
+//             if (registerLink) registerLink.style.display = 'block';
+//             if (addRecipeLink) addRecipeLink.style.display = 'none';
+//             logoutButtons.forEach(btn => btn.style.display = 'none');
+//         }
+//     };
+
+//     const handleLogout = () => {
+//         if (confirm('Are you sure you want to log out?')) {
+//             localStorage.removeItem('token');
+//             window.location.href = 'index.html';
+//         }
+//     };
+
+//     const setupPasswordToggle = (form) => {
+//         const toggle = form.querySelector('#togglePassword');
+//         const password = form.querySelector('#password');
+//         if (toggle && password) {
+//             toggle.addEventListener('click', () => {
+//                 const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+//                 password.setAttribute('type', type);
+//                 toggle.classList.toggle('fa-eye-slash');
+//             });
+//         }
+//     };
+    
+//     // --- Page-Specific Logic ---
+//     const page = window.location.pathname.split('/').pop() || 'index.html';
+
+//     // 1. Homepage Logic
+//     if (page === 'index.html') {
+//         const recipeList = document.getElementById('recipe-list');
+//         const paginationControls = document.getElementById('pagination-controls');
+//         const cardTemplate = document.getElementById('recipe-card-template');
+//         const searchInput = document.getElementById('searchInput');
+//         const searchButton = document.getElementById('searchButton');
+//         let currentPage = 1;
+//         let currentSearch = '';
+
+//         const displayRecipes = (data) => {
+//             recipeList.innerHTML = '';
+//             if (!data.recipes || data.recipes.length === 0) {
+//                 recipeList.innerHTML = '<p>No recipes found.</p>';
+//                 paginationControls.innerHTML = '';
+//                 return;
+//             }
+
+//             data.recipes.forEach(recipe => {
+//                 const card = cardTemplate.content.cloneNode(true);
+//                 card.querySelector('.recipe-card').href = `recipe.html?rid=${recipe.rid}`;
+//                 card.querySelector('.recipe-card-image').src = recipe.image || 'https://via.placeholder.com/300x200.png?text=No+Image';
+//                 card.querySelector('.recipe-card-image').alt = recipe.name;
+//                 card.querySelector('.recipe-card-name').textContent = recipe.name;
+//                 card.querySelector('.recipe-card-type').textContent = `Type: ${recipe.type}`;
+//                 card.querySelector('.recipe-card-description').textContent = `${recipe.description.substring(0, 100)}...`;
+//                 recipeList.appendChild(card);
+//             });
+            
+//             renderPagination(data.totalPages, data.currentPage);
+//         };
+
+//         const renderPagination = (totalPages, page) => {
+//             paginationControls.innerHTML = '';
+//             if (totalPages <= 1) return;
+
+//             const prevButton = document.createElement('button');
+//             prevButton.textContent = 'Previous';
+//             prevButton.disabled = page <= 1;
+//             prevButton.addEventListener('click', () => {
+//                 if(currentPage > 1) fetchRecipes(currentPage - 1, currentSearch);
+//             });
+
+//             const pageInfo = document.createElement('span');
+//             pageInfo.className = 'page-info';
+//             pageInfo.textContent = `Page ${page} of ${totalPages}`;
+
+//             const nextButton = document.createElement('button');
+//             nextButton.textContent = 'Next';
+//             nextButton.disabled = page >= totalPages;
+//             nextButton.addEventListener('click', () => {
+//                 if(currentPage < totalPages) fetchRecipes(currentPage + 1, currentSearch);
+//             });
+
+//             paginationControls.append(prevButton, pageInfo, nextButton);
+//         };
+
+//         const fetchRecipes = async (page = 1, search = '') => {
+//             showLoader();
+//             currentPage = page;
+//             currentSearch = search;
+//             try {
+//                 const response = await fetch(`${apiUrl}/api/recipes?page=${page}&search=${encodeURIComponent(search)}&limit=6`);
+//                 if (!response.ok) throw new Error('Failed to fetch recipes.');
+//                 const data = await response.json();
+//                 displayRecipes(data);
+//             } catch (error) {
+//                 recipeList.innerHTML = `<p class="message error">${error.message}</p>`;
+//             } finally {
+//                 hideLoader();
+//             }
+//         };
+        
+//         const handleSearch = () => fetchRecipes(1, searchInput.value);
+//         searchButton.addEventListener('click', handleSearch);
+//         searchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleSearch());
+        
+//         fetchRecipes(); // Initial load
+//     }
+
+//     // 2. Single Recipe Page Logic
+//     if (page === 'recipe.html') {
+//         const recipeId = new URLSearchParams(window.location.search).get('rid');
+//         const container = document.getElementById('recipe-details-container');
+//         const errorMsg = document.getElementById('recipe-error-message');
+
+//         if (!recipeId) {
+//             container.style.display = 'none';
+//             errorMsg.textContent = 'Recipe not found. Please select a recipe from the homepage.';
+//             errorMsg.style.display = 'block';
+//         } else {
+//             const fetchRecipe = async () => {
+//                 showLoader();
+//                 try {
+//                     const response = await fetch(`${apiUrl}/api/recipes/${recipeId}`);
+//                     if (!response.ok) throw new Error('Could not load recipe details.');
+//                     const recipe = await response.json();
+                    
+//                     document.title = recipe.name;
+//                     document.getElementById('recipe-name').textContent = recipe.name;
+//                     document.getElementById('recipe-image').src = recipe.image || 'https://via.placeholder.com/600x400.png?text=No+Image';
+//                     document.getElementById('recipe-image').alt = recipe.name;
+//                     document.getElementById('recipe-owner').textContent = recipe.owner;
+//                     document.getElementById('recipe-type').textContent = recipe.type;
+//                     document.getElementById('recipe-cooking-time').textContent = recipe.cookingtime;
+                    
+//                     // Use innerHTML here because content comes from a trusted rich text editor
+//                     document.getElementById('recipe-description').innerHTML = recipe.description;
+//                     document.getElementById('recipe-ingredients').innerHTML = recipe.ingredients;
+//                     document.getElementById('recipe-instructions').innerHTML = recipe.instructions;
+
+//                     if (currentUser && currentUser.uid === recipe.uid) {
+//                         const editBtnContainer = document.getElementById('edit-button-container');
+//                         editBtnContainer.innerHTML = `<a href="add-recipe.html?edit=${recipe.rid}" class="edit-button">Edit This Recipe</a>`;
+//                     }
+//                 } catch (error) {
+//                     container.style.display = 'none';
+//                     errorMsg.textContent = error.message;
+//                     errorMsg.style.display = 'block';
+//                 } finally {
+//                     hideLoader();
+//                 }
+//             };
+//             fetchRecipe();
+//         }
+//     }
+
+//     // 3. Form Logic (Login, Register, Add/Edit Recipe)
+//     const form = document.querySelector('form');
+//     if (form) {
+//         const submitButton = form.querySelector('button[type="submit"]');
+//         const messageEl = form.querySelector('.message');
+        
+//         const checkFormValidity = () => {
+//             let allValid = true;
+//             form.querySelectorAll('[required]').forEach(input => {
+//                 if (!input.value.trim()) allValid = false;
+//             });
+//             // For Quill editors (will be handled in add-recipe logic)
+//             if (window.quillInstances) {
+//                 for (const key in window.quillInstances) {
+//                     if (window.quillInstances[key].getLength() <= 1) { // 1 is an empty line
+//                         allValid = false;
+//                     }
+//                 }
+//             }
+//             if(submitButton) submitButton.disabled = !allValid;
+//         };
+        
+//         form.addEventListener('input', checkFormValidity);
+        
+//         if (page === 'login.html' || page === 'register.html') {
+//             setupPasswordToggle(form);
+//         }
+
+//         if (page === 'add-recipe.html') {
+//             if (!currentUser) {
+//                 alert('You must be logged in to access this page.');
+//                 window.location.href = 'login.html';
+//                 return;
+//             }
+
+//             const recipeId = new URLSearchParams(window.location.search).get('edit');
+//             const formTitle = document.getElementById('form-title');
+            
+//             // Initialize Quill Editors
+//             const quillOptions = { theme: 'snow', modules: { toolbar: [['bold', 'italic', 'underline'], ['link'], [{ 'list': 'ordered'}, { 'list': 'bullet' }]]}};
+//             const descEditor = new Quill('#description-editor', quillOptions);
+//             const ingrEditor = new Quill('#ingredients-editor', quillOptions);
+//             const instEditor = new Quill('#instructions-editor', quillOptions);
+//             window.quillInstances = { descEditor, ingrEditor, instEditor };
+
+//             // Check validity on text-change event in Quill
+//             Object.values(window.quillInstances).forEach(editor => {
+//                 editor.on('text-change', checkFormValidity);
+//             });
+
+//             if (recipeId) {
+//                 formTitle.textContent = 'Edit Your Recipe';
+//                 showLoader();
+//                 fetch(`${apiUrl}/api/recipes/${recipeId}`)
+//                     .then(res => {
+//                         if (res.status === 403) throw new Error("You are not authorized to edit this recipe.");
+//                         if (!res.ok) throw new Error("Could not fetch recipe data.");
+//                         return res.json();
+//                     })
+//                     .then(recipe => {
+//                         if (currentUser.uid !== recipe.uid) {
+//                              alert("You are not authorized to edit this recipe.");
+//                              window.location.href = 'index.html';
+//                              return;
+//                         }
+//                         form.rid.value = recipe.rid;
+//                         form.name.value = recipe.name;
+//                         descEditor.root.innerHTML = recipe.description;
+//                         form.type.value = recipe.type;
+//                         form.cookingtime.value = recipe.cookingtime;
+//                         ingrEditor.root.innerHTML = recipe.ingredients;
+//                         instEditor.root.innerHTML = recipe.instructions;
+//                         form.image.value = recipe.image;
+//                         checkFormValidity();
+//                     })
+//                     .catch(error => {
+//                         messageEl.className = 'message error';
+//                         messageEl.textContent = error.message;
+//                     })
+//                     .finally(hideLoader);
+//             }
+
+//             form.addEventListener('submit', async (e) => {
+//                 e.preventDefault();
+//                 showLoader();
+                
+//                 // Get content from Quill editors
+//                 const description = descEditor.root.innerHTML;
+//                 const ingredients = ingrEditor.root.innerHTML;
+//                 const instructions = instEditor.root.innerHTML;
+                
+//                 const formData = new FormData(form);
+//                 const data = Object.fromEntries(formData.entries());
+//                 const finalData = { ...data, description, ingredients, instructions };
+
+//                 const method = recipeId ? 'PUT' : 'POST';
+//                 let url = recipeId ? `${apiUrl}/api/recipes/${recipeId}` : `${apiUrl}/api/recipes`;
+
+//                 try {
+//                     const response = await fetch(url, {
+//                         method: method,
+//                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+//                         body: JSON.stringify(finalData)
+//                     });
+//                     const result = await response.json();
+//                     if (!response.ok) throw new Error(result.message);
+                    
+//                     messageEl.className = 'message success';
+//                     messageEl.textContent = `Recipe ${recipeId ? 'updated' : 'added'}! Redirecting...`;
+//                     setTimeout(() => window.location.href = 'index.html', 2000);
+//                 } catch (error) {
+//                     messageEl.className = 'message error';
+//                     messageEl.textContent = error.message;
+//                 } finally {
+//                     hideLoader();
+//                 }
+//             });
+//         }
+        
+//         // Generic Login/Register Submit Handler
+//         if (page === 'login.html' || page === 'register.html') {
+//             form.addEventListener('submit', async (e) => {
+//                 e.preventDefault();
+//                 showLoader();
+//                 const data = Object.fromEntries(new FormData(form).entries());
+//                 const endpoint = page === 'login.html' ? '/api/login' : '/api/register';
+//                 try {
+//                     const response = await fetch(apiUrl + endpoint, {
+//                         method: 'POST',
+//                         headers: { 'Content-Type': 'application/json' },
+//                         body: JSON.stringify(data)
+//                     });
+//                     const result = await response.json();
+//                     if (!response.ok) throw new Error(result.message);
+                    
+//                     messageEl.className = 'message success';
+//                     if (endpoint === '/api/login') {
+//                         localStorage.setItem('token', result.token);
+//                         messageEl.textContent = 'Login successful! Redirecting...';
+//                         setTimeout(() => window.location.href = 'index.html', 1500);
+//                     } else {
+//                         messageEl.textContent = 'Registration successful! Redirecting to login...';
+//                         setTimeout(() => window.location.href = 'login.html', 2000);
+//                     }
+//                 } catch(error) {
+//                     messageEl.className = 'message error';
+//                     messageEl.textContent = error.message;
+//                 } finally {
+//                     hideLoader();
+//                 }
+//             });
+//         }
+//     }
+
+//     // --- Global Initializers ---
+//     updateNavLinks();
+//     document.querySelectorAll('#logout-button, #logout-button-form').forEach(btn => btn.addEventListener('click', handleLogout));
+// });
